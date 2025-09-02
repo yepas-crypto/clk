@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Flip Clock</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #fff;
+      font-family: "Courier New", Courier, monospace;
+    }
+
+    .widget {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .label {
+      font-size: 10px;
+      color: rgba(178,180,184,0.6); /* 옅은 회색 */
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .clock {
+      display: flex;
+      gap: 6px;
+    }
+
+    .digit {
+      position: relative;
+      width: 60px;   /* ↓ 기존보다 절반 크기 */
+      height: 80px;
+      perspective: 800px;
+    }
+
+    .card {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: rgb(151,27,47);
+      color: rgb(178,180,184);
+      font-size: 50px;  /* ↓ 숫자 크기도 축소 */
+      font-weight: bold;
+      border-radius: 6px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+
+    /* 위/아래 절반 */
+    .card .top,
+    .card .bottom,
+    .card .flip-top,
+    .card .flip-bottom {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 50%;
+      overflow: hidden;
+    }
+
+    .card .top,
+    .card .flip-top {
+      border-bottom: 1px solid rgba(0,0,0,0.3);
+    }
+
+    .card .bottom,
+    .card .flip-bottom {
+      border-top: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .card .top,
+    .card .bottom {
+      position: relative;
+      z-index: 1;
+    }
+
+    .card .flip-top,
+    .card .flip-bottom {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 50%;
+      backface-visibility: hidden;
+    }
+
+    .card .flip-top {
+      top: 0;
+      transform-origin: bottom;
+      transform: rotateX(0deg);
+      z-index: 2;
+    }
+
+    .card .flip-bottom {
+      bottom: 0;
+      transform-origin: top;
+      transform: rotateX(180deg);
+      z-index: 2;
+    }
+
+    .digit.flip .flip-top {
+      animation: flipTop 0.5s forwards;
+    }
+
+    .digit.flip .flip-bottom {
+      animation: flipBottom 0.5s forwards;
+    }
+
+    @keyframes flipTop {
+      0% { transform: rotateX(0deg); }
+      100% { transform: rotateX(-180deg); }
+    }
+
+    @keyframes flipBottom {
+      0% { transform: rotateX(180deg); }
+      100% { transform: rotateX(0deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="widget">
+    <div class="label">InBody</div>
+    <div class="clock" id="clock"></div>
+  </div>
+
+  <script>
+    function createDigit(value) {
+      const digit = document.createElement("div");
+      digit.className = "digit";
+      digit.innerHTML = `
+        <div class="card">
+          <div class="top">${value}</div>
+          <div class="bottom">${value}</div>
+          <div class="flip-top">${value}</div>
+          <div class="flip-bottom">${value}</div>
+        </div>
+      `;
+      return digit;
+    }
+
+    function updateClock(initial=false) {
+      const now = new Date();
+      const h = now.getHours().toString().padStart(2, '0');
+      const m = now.getMinutes().toString().padStart(2, '0');
+      const timeStr = h + m;
+
+      const clock = document.getElementById("clock");
+      if (initial) {
+        clock.innerHTML = "";
+        for (let i = 0; i < timeStr.length; i++) {
+          clock.appendChild(createDigit(timeStr[i]));
+        }
+      } else {
+        const digits = clock.querySelectorAll(".digit");
+        timeStr.split("").forEach((num, i) => {
+          const digit = digits[i];
+          const top = digit.querySelector(".top");
+          const bottom = digit.querySelector(".bottom");
+          const flipTop = digit.querySelector(".flip-top");
+          const flipBottom = digit.querySelector(".flip-bottom");
+
+          if (top.textContent !== num) {
+            flipTop.textContent = top.textContent;
+            flipBottom.textContent = num;
+            digit.classList.add("flip");
+
+            setTimeout(() => {
+              top.textContent = num;
+              bottom.textContent = num;
+              digit.classList.remove("flip");
+            }, 500);
+          }
+        });
+      }
+    }
+
+    // 최초 실행
+    updateClock(true);
+
+    // 다음 분에 맞춰 시작
+    const now = new Date();
+    const delay = (60 - now.getSeconds()) * 1000;
+    setTimeout(function() {
+      updateClock();
+      setInterval(updateClock, 60000);
+    }, delay);
+  </script>
+</body>
+</html>
